@@ -3,7 +3,7 @@
 ## File cdsutils_srr_pathgetter.py
 This function reads a file which contains a list of NCBI SRR lists and retrieves the filenames and S3 path locations.
 ### Usage
-python cdsutils_srr_pathgetter.py --inputFile phs001554.txt --token prj_27436_D26642.ngc --outputFile test
+python cdsutils_srr_pathgetter.py --inputFile phs001554.txt --token prj_12345_A123456.ngc --outputFile test
 ### Inputs
 inputFile: The CSV file with the list of SRR.
 
