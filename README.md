@@ -15,9 +15,9 @@ In file mode this utility, retrieves the s3 paths for a specific study(phsId).\
 python cdsutils_srr_pathgetter.py --fileOrApi api --phsId phs001554 --token prj_12345_A123456.ngc --outputFile test
 
 ### Inputs
-inputFile: The CSV file with the list of SRR (File Mode)
-phsId: The study Id of interested Study (API Mode)
-token: The NGC file from dBGap
+inputFile: The CSV file with the list of SRR (File Mode)\
+phsId: The study Id of interested Study (API Mode)\
+token: The NGC file from dBGap\
 outputFile: The prefix the output CSV file. 
 
 ### Outputs
