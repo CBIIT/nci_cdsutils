@@ -6,13 +6,12 @@ This function reads a file (or calls an API) which contains a list of NCBI SRR l
 ### Usage
 
 #### File Mode
-In file mode this utility, retrieves the s3 paths with a list of SRRs provided in a CSV file 
+In file mode this utility, retrieves the s3 paths with a list of SRRs provided in a CSV file.\
 python cdsutils_srr_pathgetter.py --fileOrApi file --inputFile phs001554.txt --token prj_12345_A123456.ngc --outputFile test
 
 
 #### API Mode
-In file mode this utility, retrieves the s3 paths for a specific study(phsId)
-
+In file mode this utility, retrieves the s3 paths for a specific study(phsId).\
 python cdsutils_srr_pathgetter.py --fileOrApi api --phsId phs001554 --token prj_12345_A123456.ngc --outputFile test
 
 ### Inputs
