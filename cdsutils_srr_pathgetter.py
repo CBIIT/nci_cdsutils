@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+from pysradb.sraweb import SRAweb
 import csv,argparse,os,pandas as pd
 from datetime import datetime
 import requests
@@ -40,31 +41,29 @@ def get_s3_path_from_srr(srr,ngc_location,aws_region):
 def get_time():
     return datetime.now().strftime("%m-%d-%Y-%H-%M-%S")    
 
-
-
-    
-#Adding desired arguments to the script    
-parser = argparse.ArgumentParser(description='Script to populate NCBI file')
-parser.add_argument("--inputFile", required=True, type=str, help="Name of  NCBI SRR File")
-parser.add_argument("--token",required=True, type=str, help="Location of NGC File from dBGap with extension .ngc")
-parser.add_argument("--awsRegion",default='us-east-1', type=str, help="AWS Region of interest")
-parser.add_argument("--outputFile", required=True, type=str, help="Name of  Output CSV formatted file")
-
-#Parsing the provided arguments
-args = parser.parse_args()
-
-try:
-    #Storing the input file
-    ncbi_metadata_file=args.inputFile
-
+# Returns the s3 paths in a file with the NCBI file list of SRRs as the input
+def generate_s3paths_using_file(ncbi_metadata_file,ngc_token,aws_region):
     #Read the file into a Pandas DataFrame
     df = pd.read_csv(ncbi_metadata_file,sep=',',header = 0)
+    generate_s3paths_common_function(df,'file')
      
-    #Store the token NGC file
-    ngc_token=args.token
+   
 
+# Returns the s3 paths in a file using the PHSID as the input    
+def generate_s3paths_using_api(phsId,ngc_token,aws_region):
+    db = SRAweb()
+    print(f'Getting Metadata for phs {phsId}.Please be patient....' )
+    df = db.sra_metadata(phsId, detailed=True)
+    print(f'Data Set for phs {phsId} received...')
+    print(f'Retrieving files for each SRR...')
+    generate_s3paths_common_function(df,'api')
+    
+
+def generate_s3paths_common_function(df,mode):
     # Generates a List of Lists of Tuples with (SRR, FilePath, Filename)
-    list_of_tuples=[get_s3_path_from_srr(srr,ngc_token,'us-east-1') for srr in df['Run']]
+    if (mode=='api'):
+        df.rename(columns = {'run_accession':'Run'}, inplace = True)
+    list_of_tuples=[get_s3_path_from_srr(srr,ngc_token,aws_region) for srr in df['Run']]
 
     # Flatten to a single list of tuples
     flat_list_tuples = [item for sublist in list_of_tuples for item in sublist]
@@ -81,6 +80,51 @@ try:
 
     #Write the Dataframe to CSV
     df_merged.to_csv(final_output_file, sep=',', index=False)
+
+
+    
+#Adding desired arguments to the script    
+parser = argparse.ArgumentParser(description='Script to populate NCBI file')
+
+parser.add_argument("--token",required=True, type=str, help="Location of NGC File from dBGap with extension .ngc")
+parser.add_argument("--awsRegion",default='us-east-1', type=str, help="AWS Region of interest. Defaults to us-east-1")
+parser.add_argument("--outputFile", required=True, type=str, help="Name of  Output CSV formatted file")
+parser.add_argument("--fileOrApi", choices=['file', 'api'], default='api',type=str, help="Please specify whether you want to provide the CSV file with use the API with specified PHS Number to get the SRRs")
+parser.add_argument("--inputFile", type=str, help="Name of  NCBI SRR File")
+parser.add_argument("--phsId", type=str, help="PHS Study Identifier from dbGap. Required for API Mode")
+
+#Parsing the provided arguments
+args = parser.parse_args()
+
+#If file mode is selected to provide SRRs, get name of the file
+if(args.fileOrApi=='file'):
+    #Storing the input file
+    ncbi_metadata_file=args.inputFile
+    mode='file'
+    if(args.inputFile==None):
+        parser.error('An input file containing list of SRRs has to be provided for File Mode.')
+    
+else:
+#Api mode is selected
+    mode='api'
+    phsId=args.phsId
+    if(phsId==None):
+        parser.error('PHS Id has to be provided for API mode.')
+
+
+try:
+          
+    #Store the token NGC file & Region
+    ngc_token=args.token
+    aws_region = args.awsRegion
+    if(mode=='file'):
+        print('File mode selected.')
+        generate_s3paths_using_file(ncbi_metadata_file,ngc_token,aws_region)
+    else:
+        print('API mode selected.')
+        generate_s3paths_using_api(phsId,ngc_token,aws_region)
+
+    
 except Exception as e:
     print(e)
 
